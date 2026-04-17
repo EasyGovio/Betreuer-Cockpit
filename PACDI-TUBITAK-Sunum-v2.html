@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PACDI Global – TÜBİTAK Sunumu</title>
+<title>PACDI Global – TÜBİTAK Stratejik Sunum 2026</title>
 <style>
   :root {
     --navy: #1a3a5c;
@@ -32,7 +32,7 @@ overflow: hidden;
 position: absolute; inset: 0;
 display: none; flex-direction: column;
 background: linear-gradient(160deg, #1a3a5c 0%, #1e4470 100%);
-overflow: hidden;
+overflow-y: auto;
 }
 .slide.active { display: flex; }
 
@@ -60,7 +60,7 @@ letter-spacing: 1.5px; padding: 4px 12px; border-radius: 20px; text-transform: u
 .hd-title { font-family: Georgia, serif; font-size: clamp(22px, 4vw, 34px); color: var(–white); font-weight: 700; line-height: 1.2; }
 .hd-title span { color: var(–gold); }
 
-.body { flex: 1; padding: 16px 28px 72px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
+.body { flex: 1; padding: 16px 28px 72px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 
 .grid { display: grid; gap: 10px; }
 .g2 { grid-template-columns: 1fr 1fr; }
@@ -111,7 +111,6 @@ tr:last-child td { border-bottom: none; }
 .pcon { color: var(–muted); }
 .ptar { color: var(–gold); font-weight: 700; }
 
-/* TITLE */
 #s1 { background: linear-gradient(135deg, #0f2237 0%, #1a3a5c 50%, #1e4470 100%); justify-content: center; align-items: center; text-align: center; }
 #s1::before { content: ‘’; position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(246,180,95,0.15) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); }
 .s1in { position: relative; z-index: 2; padding: 20px; }
@@ -123,8 +122,7 @@ tr:last-child td { border-bottom: none; }
 .s1-founder { font-size: 13px; color: var(–muted); margin-bottom: 12px; }
 .s1-quote { font-family: Georgia, serif; font-size: clamp(13px,2.5vw,17px); color: var(–gold); font-style: italic; }
 
-/* CLOSING */
-#s12 { background: linear-gradient(160deg, #0f2237 0%, #1a3a5c 100%); justify-content: center; align-items: center; text-align: center; }
+#s13 { background: linear-gradient(160deg, #0f2237 0%, #1a3a5c 100%); justify-content: center; align-items: center; text-align: center; }
 .cl-quote { font-family: Georgia, serif; font-size: clamp(18px,4vw,32px); color: var(–gold); font-style: italic; max-width: 680px; line-height: 1.3; margin-bottom: 32px; padding: 0 20px; }
 .cl-name { font-size: 16px; color: var(–white); font-weight: 600; margin-bottom: 6px; }
 .cl-contact { font-size: 13px; color: var(–muted); margin-bottom: 24px; }
@@ -147,6 +145,8 @@ tr:last-child td { border-bottom: none; }
 <div class="progress-bar" id="prog"></div>
 <div class="deck">
 
+<!-- S1: KAPAK -->
+
 <div class="slide active" id="s1">
   <div class="s1in">
     <div class="s1-logo">PACDI</div>
@@ -160,8 +160,10 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- S2: SORUN -->
+
 <div class="slide" id="s2">
-  <div class="badge">01 / 11</div>
+  <div class="badge">01 / 12</div>
   <div class="hd"><div class="hd-num">01 · Problem</div><div class="hd-title">Kontrolden Çıkan <span>Krizler</span></div></div>
   <div class="body">
     <div class="grid g3">
@@ -173,8 +175,10 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- S3: VİZYON -->
+
 <div class="slide" id="s3">
-  <div class="badge">02 / 11</div>
+  <div class="badge">02 / 12</div>
   <div class="hd"><div class="hd-num">02 · Vizyon</div><div class="hd-title">Türkiye İçin <span>Stratejik Değer</span></div></div>
   <div class="body">
     <div class="grid g2">
@@ -187,8 +191,10 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- S4: KÜRESEL SAĞLIK -->
+
 <div class="slide" id="s4">
-  <div class="badge">03 / 11</div>
+  <div class="badge">03 / 12</div>
   <div class="hd"><div class="hd-num">03 · Pazar Fırsatı</div><div class="hd-title">Küresel Sağlık <span>Tsunamisi</span></div></div>
   <div class="body">
     <div class="grid g2" style="flex:1">
@@ -215,8 +221,10 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- S5: ÜRÜN -->
+
 <div class="slide" id="s5">
-  <div class="badge">04 / 11</div>
+  <div class="badge">04 / 12</div>
   <div class="hd"><div class="hd-num">04 · Ürün</div><div class="hd-title">Her Kriz İçin Bir <span>PACDI Çözümü</span></div></div>
   <div class="body">
     <div class="grid g2">
@@ -229,27 +237,38 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- S6: PAZAR BÜYÜKLÜĞÜ -->
+
 <div class="slide" id="s6">
-  <div class="badge">05 / 11</div>
+  <div class="badge">05 / 12</div>
   <div class="hd"><div class="hd-num">05 · Pazar</div><div class="hd-title">Pazar <span>Büyüklüğü</span></div></div>
   <div class="body" style="justify-content:center">
     <div class="grid g3">
-      <div class="card" style="text-align:center;padding:20px 12px"><div class="cs">€20M+</div><div class="ct" style="text-align:center">Vasi Yazılım Pazarı</div><div class="cl" style="text-align:center">Almanya — BetreuerPro</div></div>
-      <div class="card" style="text-align:center;padding:20px 12px"><div class="cs">€3B</div><div class="ct" style="text-align:center">AZAV Eğitim Hacmi</div><div class="cl" style="text-align:center">Yıllık eğitim pazarı</div></div>
+      <div class="card" style="text-align:center;padding:20px 12px"><div class="cs">€120M</div><div class="ct" style="text-align:center">Vasi Yazılım Pazarı</div><div class="cl" style="text-align:center">Almanya — BetreuerPro</div></div>
+      <div class="card" style="text-align:center;padding:20px 12px"><div class="cs">€500M</div><div class="ct" style="text-align:center">DiPA Bütçesi</div><div class="cl" style="text-align:center">Alman dijital bakım uygulamaları</div></div>
       <div class="card" style="text-align:center;padding:20px 12px;border-color:var(--gold)"><div class="cs">€35B</div><div class="ct" style="text-align:center">Dijital Sağlık Pazarı</div><div class="cl" style="text-align:center">Almanya — DiGA ekosistemi</div></div>
     </div>
-    <div class="hl" style="text-align:center">Hedef: Bu pazarlardan pay almak değil — yeni bir pazar yaratmak.</div>
+    <div style="display:flex;justify-content:center;margin:10px 0">
+      <div style="background:rgba(246,180,95,0.1);padding:8px 16px;border-radius:30px">
+        <span style="color:var(--gold);font-weight:700">AB Care-Tech: €30B</span>
+        <span style="color:var(--muted);margin:0 8px">|</span>
+        <span style="color:var(--gold);font-weight:700">AZAV Eğitim: €3B</span>
+      </div>
+    </div>
+    <div class="hl" style="text-align:center">SAM (Erişilebilir Pazar): €3,5B – €4,2B · Hedef: Yeni bir pazar yaratmak.</div>
   </div>
 </div>
 
+<!-- S7: GELİR MODELİ -->
+
 <div class="slide" id="s7">
-  <div class="badge">06 / 11</div>
+  <div class="badge">06 / 12</div>
   <div class="hd"><div class="hd-num">06 · İş Modeli</div><div class="hd-title">Gelir <span>Modeli</span></div></div>
   <div class="body">
     <div class="rev-grid">
       <div class="rev-card"><div class="rev-arr">→</div><div class="rev-t">Gelir Paylaşımı</div><div class="rev-d">AZAV kurumlarından %20-30 komisyon</div></div>
       <div class="rev-card"><div class="rev-arr">→</div><div class="rev-t">SaaS Aboneliği</div><div class="rev-d">BetreuerPro Pro €99/ay · Enterprise özel fiyat</div></div>
-      <div class="rev-card"><div class="rev-arr">→</div><div class="rev-t">Beyaz Etiket Lisanslama</div><div class="rev-d">Kurumsal entegrasyon geliri</div></div>
+      <div class="rev-card"><div class="rev-arr">→</div><div class="rev-t">Kurumsal Lisans</div><div class="rev-d">Caritas/Diakonie için €2M+/yıl</div></div>
       <div class="rev-card"><div class="rev-arr">→</div><div class="rev-t">DiGA Reçete Geliri</div><div class="rev-d">Onay sonrası 200-400€/hasta/yıl</div></div>
     </div>
     <div class="proj">
@@ -261,8 +280,10 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- S8: NEDEN PACDI -->
+
 <div class="slide" id="s8">
-  <div class="badge">07 / 11</div>
+  <div class="badge">07 / 12</div>
   <div class="hd"><div class="hd-num">07 · Rekabet Avantajı</div><div class="hd-title">Neden <span>PACDI?</span></div></div>
   <div class="body">
     <div class="grid g2">
@@ -274,9 +295,46 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- S9: STRATEJİK YAPILANMA -->
+
 <div class="slide" id="s9">
-  <div class="badge">08 / 11</div>
-  <div class="hd"><div class="hd-num">08 · Plan</div><div class="hd-title">Yol Haritası <span>2026–2028</span></div></div>
+  <div class="badge">08 / 12</div>
+  <div class="hd"><div class="hd-num">08 · Yapılanma</div><div class="hd-title">Stratejik <span>Şirket Yapısı</span></div></div>
+  <div class="body">
+    <div class="grid g2">
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🏛️</div>
+        <div class="ct" style="text-align:center;font-size:16px">IP Ltd. Şti.</div>
+        <div class="cl" style="text-align:center;margin-bottom:12px">(Teknopark / Türkiye)</div>
+        <div style="background:rgba(246,180,95,0.15);padding:8px;border-radius:6px;font-size:11px;color:var(--off-white)">
+          Tüm yazılım, marka ve patentlerin sahibi<br>
+          <span style="color:var(--gold)">%0 Kurumlar Vergisi</span> (31.12.2028'e kadar)
+        </div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🤝</div>
+        <div class="ct" style="text-align:center;font-size:16px">Operasyonel Ltd.</div>
+        <div class="cl" style="text-align:center;margin-bottom:12px">(Almanya / İrtibat Noktası)</div>
+        <div style="background:rgba(246,180,95,0.15);padding:8px;border-radius:6px;font-size:11px;color:var(--off-white)">
+          Satış, pazarlama, GDPR temsilciliği<br>
+          IP Ltd.'ye lisans bedeli öder
+        </div>
+      </div>
+    </div>
+    <div class="hl" style="text-align:center">
+      <span style="font-weight:700">Avantaj:</span> Varlık koruma · Vergi optimizasyonu · Çıkış stratejisi · Finanzamt riskine karşı kalkan
+    </div>
+    <div class="tags" style="justify-content:center">
+      <span class="tag">Transfer Fiyatlandırması</span><span class="tag">PFA ile Güvence</span><span class="tag">Hizmet Alımı Modeli</span>
+    </div>
+  </div>
+</div>
+
+<!-- S10: YOL HARİTASI -->
+
+<div class="slide" id="s10">
+  <div class="badge">09 / 12</div>
+  <div class="hd"><div class="hd-num">09 · Plan</div><div class="hd-title">Yol Haritası <span>2026–2028</span></div></div>
   <div class="body" style="justify-content:center">
     <div class="roadmap">
       <div class="ry"><div class="ry-year">2026</div><div class="ry-phase">Pilot & Temel</div><ul class="ry-items"><li>Berlin'de 2-3 kurum pilot</li><li>TÜBİTAK başvurusu</li><li>Demo modül</li><li>İlk abonelik gelirleri</li></ul></div>
@@ -287,23 +345,27 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
-<div class="slide" id="s10">
-  <div class="badge">09 / 11</div>
-  <div class="hd"><div class="hd-num">09 · Finansman</div><div class="hd-title">Finansman <span>İhtiyacı</span></div></div>
+<!-- S11: FİNANSMAN -->
+
+<div class="slide" id="s11">
+  <div class="badge">10 / 12</div>
+  <div class="hd"><div class="hd-num">10 · Finansman</div><div class="hd-title">Finansman <span>İhtiyacı</span></div></div>
   <div class="body">
     <div class="card" style="flex:1;padding:16px 20px">
-      <div class="fin-row"><div class="fin-src">TÜBİTAK 1507/1512</div><div class="fin-amt">40.000 – 60.000 €</div><div class="fin-desc">AI modül geliştirme, klinik pilot</div></div>
-      <div class="fin-row"><div class="fin-src">KOSGEB Dijital Dönüşüm</div><div class="fin-amt">150.000 – 300.000 TL</div><div class="fin-desc">Yazılım lisansları, pazarlama</div></div>
-      <div class="fin-row"><div class="fin-src">İYTE / İNNOPARK</div><div class="fin-amt">Ofis + Mentorluk</div><div class="fin-desc">Ar-Ge çalışma alanı, network</div></div>
+      <div class="fin-row"><div class="fin-src">TÜBİTAK 1507</div><div class="fin-amt">40.000 – 60.000 €</div><div class="fin-desc">AI modül geliştirme, klinik pilot (Hizmet alımı %20 limit)</div></div>
+      <div class="fin-row"><div class="fin-src">KOSGEB İleri Girişimci</div><div class="fin-amt">2.000.000 TL'ye kadar</div><div class="fin-desc">Şirket kurulumu, yazılım lisansları, pazarlama</div></div>
+      <div class="fin-row"><div class="fin-src">Teknopark (İYTE/İnnopark)</div><div class="fin-amt">Vergi Muafiyeti + Ofis</div><div class="fin-desc">Kurumlar Vergisi %0 (31.12.2028), KDV istisnası, mentorluk</div></div>
       <div class="fin-row"><div class="fin-src">Öz Sermaye (Kurucu)</div><div class="fin-amt">Altyapı Karşılandı</div><div class="fin-desc">İlk gelirler Ar-Ge'ye aktarılır; gerekirse takviye</div></div>
     </div>
     <div class="hl">Bu destek bir hibeden öte — Türkiye'nin Avrupa'ya teknoloji ihracı vizyonuna stratejik yatırımdır.</div>
   </div>
 </div>
 
-<div class="slide" id="s11">
-  <div class="badge">10 / 11</div>
-  <div class="hd"><div class="hd-num">10 · Etki</div><div class="hd-title">Sosyal & Ekonomik <span>Etki</span></div></div>
+<!-- S12: SOSYAL ETKİ -->
+
+<div class="slide" id="s12">
+  <div class="badge">11 / 12</div>
+  <div class="hd"><div class="hd-num">11 · Etki</div><div class="hd-title">Sosyal & Ekonomik <span>Etki</span></div></div>
   <div class="body">
     <div class="grid g2">
       <div class="card"><div class="ci">🇹🇷</div><div class="ct">500.000+ Gence Kariyer Rehberliği</div><div class="cx">PusulaPro ile veriye dayalı meslek yönlendirme — NEET oranını düşürme</div></div>
@@ -314,8 +376,10 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
-<div class="slide" id="s12">
-  <div class="badge">11 / 11</div>
+<!-- S13: KAPANIŞ -->
+
+<div class="slide" id="s13">
+  <div class="badge">12 / 12</div>
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:20px">
     <div class="cl-quote">"İnsanlık Onuru Ekmekten Önce Gelir"</div>
     <div class="cl-name">PACDI Global – Dijital Navigasyon Ekosistemi</div>
@@ -330,7 +394,7 @@ tr:last-child td { border-bottom: none; }
 
 <div class="nav">
   <button id="prevBtn" onclick="go(-1)" disabled>←</button>
-  <span id="sc">1 / 12</span>
+  <span id="sc">1 / 13</span>
   <button id="nextBtn" onclick="go(1)">→</button>
 </div>
 
