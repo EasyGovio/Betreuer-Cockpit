@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Peg Solitaire - Tüm Tahtalar</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body {
+            background: #1e4b3c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
+        }
+        .app {
+            max-width: 700px;
+            width: 100%;
+            background: #f2e5c6;
+            border-radius: 48px;
+            padding: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; margin: 0 0 12px 0; color: #2c4a3a; font-size: 1.8rem; }
+        .game-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+            background: #d9c294;
+            padding: 12px;
+            border-radius: 50px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+        .game-btn {
+            background: #fff0cf;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: monospace;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .game-btn.active {
+            background: #ffb347;
+            color: white;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #e2bc89;
+            border-radius: 32px;
+            width: 100%;
+            aspect-ratio: 1/1;
+            cursor: pointer;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2d3e2b;
+            padding: 8px 16px;
+            border-radius: 60px;
+            margin: 12px 0 8px;
+            color: #fef0cf;
+        }
+        .stats span { background: #00000066; padding: 4px 12px; border-radius: 30px; }
+        button#resetBtn {
+            background: #ffcd94;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .message {
+            text-align: center;
+            background: #efe0b0;
+            padding: 6px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <h1>🧩 PEG SOLITAIRE</h1>
+    <div class="game-selector" id="gameSelector"></div>
+    <canvas id="pegCanvas" width="500" height="500"></canvas>
+    <div class="stats">
+        <span>❤️ Hamle: <span id="moveCount">0</span></span>
+        <span>⏱️ Süre: <span id="timerDisplay">00:00</span></span>
+        <button id="resetBtn">🔄 Sıfırla</button>
+    </div>
+    <div class="message" id="gameMsg">Bir oyun seç ve başla!</div>
+</div>
+
+<script>
+    // ======================== TÜM TAHTA TANIMLARI ========================
+    const BOARD_DEFS = {
+        "English": { rows:7, cols:7, startEmpty:[3,3], shape:(r,c)=>( (r<=1||r>=5)&&c>=2&&c<=4 ) || (r>=2&&r<=4&&c>=0&&c<=6) },
+        "French": { rows:7, cols:7, startEmpty:[3,3], shape:(r,c)=> (r===0||r===6)&&c>=2&&c<=4 ? true : (r===1||r===5)&&c>=1&&c<=5 ? true : r>=2&&r<=4&&c>=0&&c<=6 },
+        "European 37": { rows:7, cols:7, startEmpty:[3,3], shape:(r,c)=> Math.abs(r-3)+Math.abs(c-3) <= 3 },
+        "Hexagonal 61": { rows:9, cols:9, startEmpty:[4,4], shape:(r,c)=> Math.abs(r-4)+Math.abs(c-4) <= 4 && Math.abs(r-c) <= 4 },
+        "Square 16": { rows:4, cols:4, startEmpty:[1,1], shape:()=>true },
+        "Square 25": { rows:5, cols:5, startEmpty:[2,2], shape:()=>true },
+        "Square 36 #1": { rows:6, cols:6, startEmpty:[2,2], shape:()=>true },
+        "Square 36 #2": { rows:6, cols:6, startEmpty:[2,3], shape:()=>true },
+        "Square 36 #3": { rows:6, cols:6, startEmpty:[3,3], shape:()=>true },
+        "Triangle 8x8": { rows:8, cols:15, startEmpty:[0,0], shape:(r,c)=> c <= r },
+        "Trapezoid": { rows:5, cols:7, startEmpty:[2,3], shape:(r,c)=> r===0? c>=2&&c<=4 : r===1? c>=1&&c<=5 : r>=2 && c>=0&&c<=6 },
+        "Rhombus": { rows:7, cols:7, startEmpty:[3,3], shape:(r,c)=> Math.abs(r-3)+Math.abs(c-3) <= 3 },
+        "Snowflake": { rows:7, cols:7, startEmpty:[3,3], shape:(r,c)=> (r===0||r===6)&&c===3 ? true : (r===1||r===5)&&c>=1&&c<=5 ? true : r>=2&&r<=4&&c>=0&&c<=6 },
+        "Wiegleb": { rows:7, cols:7, startEmpty:[3,3], shape:(r,c)=> (r===0||r===6)&&c>=2&&c<=4 ? true : (r===1||r===5)&&c>=1&&c<=5 ? true : r>=2&&r<=4&&c>=0&&c<=6 },
+        "Asymmetric": { rows:7, cols:7, startEmpty:[2,2], shape:(r,c)=> (r<=4&&c<=4&&!(r===0&&c===0)) || (r===5&&c>=1&&c<=3) || (r===6&&c===2) }
+    };
+
+    let currentId = "English";
+    let rows, cols, board, isValid, selectedRow=null, selectedCol=null;
+    let moveCount=0, timerSeconds=0, timerInterval=null;
+    const canvas = document.getElementById('pegCanvas');
+    let ctx = canvas.getContext('2d');
+    let cellW, cellH;
+
+    function stopTimer() { if(timerInterval) clearInterval(timerInterval); timerInterval=null; }
+    function startTimer() { stopTimer(); timerInterval = setInterval(()=>{ timerSeconds++; updateTimerDisplay(); },1000); }
+    function updateTimerDisplay() { let m=Math.floor(timerSeconds/60), s=timerSeconds%60; document.getElementById('timerDisplay').innerText=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
+    function countPegs() { let cnt=0; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(isValid[r][c] && board[r][c]===true) cnt++; return cnt; }
+    function updateUI() { document.getElementById('moveCount').innerText=moveCount; let left=countPegs(); let msg=document.getElementById('gameMsg'); if(left===1) msg.innerText="🏆 Mükemmel! Tek çivi kaldı!"; else if(left===0) msg.innerText="🤯 Sıfır çivi! İnanılmaz!"; else msg.innerText=`📌 Kalan çivi: ${left}  |  Hamle: ${moveCount}`; }
+
+    function loadBoard(boardId) {
+        stopTimer();
+        const def = BOARD_DEFS[boardId];
+        if(!def) return;
+        rows=def.rows; cols=def.cols;
+        isValid = Array(rows).fill().map(()=>Array(cols).fill(false));
+        for(let i=0;i<rows;i++) for(let j=0;j<cols;j++) isValid[i][j]=def.shape(i,j);
+        board = Array(rows).fill().map(()=>Array(cols).fill(null));
+        for(let i=0;i<rows;i++) for(let j=0;j<cols;j++) if(isValid[i][j]) board[i][j]=true;
+        let [er,ec]=def.startEmpty;
+        if(isValid[er]?.[ec]) board[er][ec]=false;
+        else { for(let i=0;i<rows;i++) { let done=false; for(let j=0;j<cols;j++) if(isValid[i][j]){ board[i][j]=false; done=true; break; } if(done) break; } }
+        moveCount=0; timerSeconds=0; updateTimerDisplay(); document.getElementById('moveCount').innerText="0"; selectedRow=null;
+        startTimer(); updateUI(); drawBoard();
+        currentId=boardId;
+        document.querySelectorAll('.game-btn').forEach(btn=>{ if(btn.innerText===boardId) btn.classList.add('active'); else btn.classList.remove('active'); });
+    }
+
+    function isValidMove(fr,fc,tr,tc) {
+        if(!isValid[tr]?.[tc] || board[tr][tc]!==false) return false;
+        if(!isValid[fr]?.[fc] || board[fr][fc]!==true) return false;
+        let dr=tr-fr, dc=tc-fc;
+        if((Math.abs(dr)===2 && dc===0)) { let mr=(fr+tr)/2, mc=fc; if(isValid[mr][mc] && board[mr][mc]===true) return true; }
+        if((Math.abs(dc)===2 && dr===0)) { let mr=fr, mc=(fc+tc)/2; if(isValid[mr][mc] && board[mr][mc]===true) return true; }
+        return false;
+    }
+    function applyMove(fr,fc,tr,tc) {
+        if(!isValidMove(fr,fc,tr,tc)) return false;
+        let mr=(fr+tr)/2, mc=(fc+tc)/2;
+        board[fr][fc]=false; board[mr][mc]=false; board[tr][tc]=true;
+        moveCount++; updateUI(); drawBoard(); return true;
+    }
+
+    function drawBoard() {
+        if(!ctx) return;
+        canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
+        cellW = canvas.width/cols; cellH = canvas.height/rows;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='#e2bc89'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        for(let r=0;r<rows;r++) {
+            for(let c=0;c<cols;c++) {
+                let x=c*cellW, y=r*cellH, rad=Math.min(cellW,cellH)*0.28;
+                if(isValid[r][c]) {
+                    ctx.beginPath(); ctx.arc(x+cellW/2,y+cellH/2,rad+1,0,Math.PI*2); ctx.fillStyle='#a56b38'; ctx.fill();
+                    ctx.beginPath(); ctx.arc(x+cellW/2,y+cellH/2,rad,0,Math.PI*2); ctx.fillStyle='#f2d9b0'; ctx.fill();
+                    if(board[r][c]===true) {
+                        ctx.beginPath(); ctx.arc(x+cellW/2,y+cellH/2,rad-2,0,Math.PI*2); ctx.fillStyle='#FFB347'; ctx.fill();
+                        ctx.beginPath(); ctx.arc(x+cellW/2,y+cellH/2,rad-4,0,Math.PI*2); ctx.fillStyle='#E67E22'; ctx.fill();
+                        ctx.fillStyle='#3b2a1f';
+                        ctx.beginPath(); ctx.arc(x+cellW/2-rad*0.2,y+cellH/2-rad*0.15,rad*0.1,0,Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(x+cellW/2+rad*0.2,y+cellH/2-rad*0.15,rad*0.1,0,Math.PI*2); ctx.fill();
+                    } else if(board[r][c]===false) {
+                        ctx.beginPath(); ctx.arc(x+cellW/2,y+cellH/2,rad-3,0,Math.PI*2); ctx.fillStyle='#8b5a2b'; ctx.fill();
+                        ctx.fillStyle='#ffd966'; ctx.font=`${Math.floor(rad)}px "Segoe UI Emoji"`; ctx.fillText("✨",x+cellW/2-7,y+cellH/2+5);
+                    }
+                    if(selectedRow===r && selectedCol===c && board[r][c]===true) {
+                        ctx.beginPath(); ctx.arc(x+cellW/2,y+cellH/2,rad+3,0,Math.PI*2); ctx.strokeStyle='#fff0a0'; ctx.lineWidth=3; ctx.stroke();
+                    }
+                } else {
+                    ctx.fillStyle='#b97f4b'; ctx.fillRect(x+1,y+1,cellW-2,cellH-2);
+                    ctx.fillStyle='#a26f3a'; ctx.font=`${Math.floor(cellW*0.3)}px "Segoe UI"`; ctx.fillText("🌿",x+cellW*0.35,y+cellH*0.7);
+                }
+            }
+        }
+    }
+
+    function handleClick(e) {
+        let rect = canvas.getBoundingClientRect();
+        let scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        let canvasX = (clientX - rect.left)*scaleX, canvasY = (clientY - rect.top)*scaleY;
+        if(canvasX<0 || canvasY<0 || canvasX>canvas.width || canvasY>canvas.height) return;
+        let col = Math.floor(canvasX/cellW), row = Math.floor(canvasY/cellH);
+        if(row<0||row>=rows||col<0||col>=cols||!isValid[row][col]) { selectedRow=null; drawBoard(); return; }
+        if(selectedRow===null) {
+            if(board[row][col]===true) { selectedRow=row; selectedCol=col; drawBoard(); document.getElementById('gameMsg').innerHTML="➡️ Şimdi atlanacak çivinin üzerinden boşluğa tıkla"; }
+            else document.getElementById('gameMsg').innerHTML="🔔 Önce bir çivi seç!";
+        } else {
+            if(isValidMove(selectedRow,selectedCol,row,col)) { applyMove(selectedRow,selectedCol,row,col); selectedRow=null; drawBoard(); }
+            else { if(board[row][col]===true) { selectedRow=row; selectedCol=col; drawBoard(); document.getElementById('gameMsg').innerHTML="🔄 Yeni çivi seçildi"; } else { selectedRow=null; drawBoard(); document.getElementById('gameMsg').innerHTML="❌ Geçersiz atlama"; } }
+        }
+        updateUI();
+    }
+
+    function buildMenu() {
+        let container = document.getElementById('gameSelector');
+        container.innerHTML = '';
+        for(let name of Object.keys(BOARD_DEFS)) {
+            let btn = document.createElement('button');
+            btn.innerText = name;
+            btn.className = 'game-btn';
+            btn.onclick = () => loadBoard(name);
+            container.appendChild(btn);
+        }
+    }
+
+    window.onload = () => {
+        buildMenu();
+        loadBoard("English");
+        canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); handleClick(e); });
+        document.getElementById('resetBtn').onclick = () => loadBoard(currentId);
+        window.addEventListener('resize', ()=>{ drawBoard(); });
+    };
+</script>
+</body>
+</html>

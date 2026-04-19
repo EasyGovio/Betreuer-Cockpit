@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Peg Solitaire - Tüm Tahtalar</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #1e4b3c, #0e2e24);
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Roboto', 'Comic Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .app {
+            max-width: 700px;
+            width: 100%;
+            background: #f2e5c6;
+            border-radius: 60px;
+            padding: 20px 16px 24px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.4);
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin: 0 0 10px 0;
+            color: #2c4a3a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .game-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
+            background: #d9c294;
+            padding: 12px;
+            border-radius: 48px;
+        }
+        .game-btn {
+            background: #fff0cf;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 8px 5px;
+            border-radius: 60px;
+            color: #2d5a44;
+            cursor: pointer;
+            transition: 0.05s linear;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-family: monospace;
+        }
+        .game-btn.active {
+            background: #ffb347;
+            color: white;
+            box-shadow: inset 0 1px 3px #b4621a;
+        }
+        .canvas-container {
+            background: #c9945e;
+            border-radius: 48px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #e2bc89;
+            border-radius: 32px;
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+            box-shadow: inset 0 0 0 3px #b5713a, 0 6px 12px rgba(0,0,0,0.3);
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2d3e2b;
+            padding: 10px 20px;
+            border-radius: 60px;
+            margin: 12px 0 8px;
+            color: #fef0cf;
+            font-weight: bold;
+        }
+        .moves-box, .time-box {
+            background: #00000055;
+            padding: 5px 18px;
+            border-radius: 40px;
+            font-size: 1.3rem;
+        }
+        button {
+            background: #ffcd94;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 3px 0 #8b5a2b;
+            transform: translateY(-2px);
+            transition: 0.05s linear;
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        .message-area {
+            text-align: center;
+            background: #efe0b0;
+            margin-top: 12px;
+            padding: 6px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: #1f3a2c;
+        }
+        @media (max-width: 550px) {
+            .game-btn { font-size: 0.7rem; padding: 6px 3px; }
+            .stats { font-size: 0.8rem; }
+            .moves-box, .time-box { font-size: 1rem; padding: 3px 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <h1>🧩 PEG SOLITAIRE 🧩</h1>
+    <div class="game-selector" id="gameSelector"></div>
+    <div class="canvas-container">
+        <canvas id="pegCanvas" width="500" height="500" style="width:100%; aspect-ratio:1/1"></canvas>
+    </div>
+    <div class="stats">
+        <span>🎯 Hamle: <span id="moveCount">0</span></span>
+        <span>⏱️ Süre: <span id="timerDisplay">00:00</span></span>
+        <button id="resetBtn">🔄 Sıfırla</button>
+    </div>
+    <div class="message-area" id="gameMsg">Bir oyun seç ve başla!</div>
+</div>
+
+<script>
+    // ---------- TÜM TAHTA TANIMLARI ----------
+    // Her tahta: ad, geçerli hücreleri döndüren fonksiyon (rows,cols, isValid[row][col])
+    // ve başlangıçtaki boşluk koordinatları (startEmptyRow, startEmptyCol)
+    // Bazı tahtalar farklı başlangıç boşluklarına sahip (Square36 #1,#2,#3)
+    
+    const BOARD_DEFS = {
+        "English": {
+            rows: 7, cols: 7,
+            shape: (r,c) => {
+                if( (r===0 || r===1 || r===5 || r===6) && (c>=2 && c<=4) ) return true;
+                if( (r===2 || r===3 || r===4) && (c>=0 && c<=6) ) return true;
+                return false;
+            },
+            startEmpty: [3,3]
+        },
+        "French": {
+            rows: 7, cols: 7,
+            shape: (r,c) => {
+                // Fransız tahtası + işareti şekli: merkez satır/sütun tam, kenarlar sadece orta 3
+                if( (r===0 || r===6) && (c>=2 && c<=4) ) return true;
+                if( (r===1 || r===5) && (c>=1 && c<=5) ) return true;
+                if( r>=2 && r<=4 && c>=0 && c<=6 ) return true;
+                return false;
+            },
+            startEmpty: [3,3]
+        },
+        "European 37": {
+            rows: 7, cols: 7,
+            shape: (r,c) => {
+                // Avrupa 37 delik: dairemsi, satır 0-6, sütun 0-6, merkezden uzaklık <=3
+                const dr = Math.abs(r-3);
+                const dc = Math.abs(c-3);
+                if( dr+dc <= 3 ) return true;
+                if( (dr===3 && dc===0) || (dc===3 && dr===0) ) return true;
+                return false;
+            },
+            startEmpty: [3,3]
+        },
+        "Hexagonal 61": {
+            rows: 9, cols: 9,
+            shape: (r,c) => {
+                // Altıgen 61 delik (yuvarlak altıgen)
+                const center = 4;
+                const dr = Math.abs(r-center);
+                const dc = Math.abs(c-center);
+                if( dr+dc <= 4 && Math.abs(dr-dc)<=4 ) return true;
+                return false;
+            },
+            startEmpty: [4,4]
+        },
+        "Square 16": {
+            rows: 4, cols: 4,
+            shape: (r,c) => true, // tüm hücreler geçerli
+            startEmpty: [1,1] // ortaya yakın
+        },
+        "Square 25": {
+            rows: 5, cols: 5,
+            shape: (r,c) => true,
+            startEmpty: [2,2]
+        },
+        "Square 36 #1": {
+            rows: 6, cols: 6,
+            shape: (r,c) => true,
+            startEmpty: [2,2]  // merkezlerden biri
+        },
+        "Square 36 #2": {
+            rows: 6, cols: 6,
+            shape: (r,c) => true,
+            startEmpty: [2,3]
+        },
+        "Square 36 #3": {
+            rows: 6, cols: 6,
+            shape: (r,c) => true,
+            startEmpty: [3,3]
+        },
+        "Triangle 8x8": {
+            rows: 8, cols: 15,  // üçgen şeklinde genişlik artar
+            shape: (r,c) => {
+                // üçgen: her satırda 0'dan r+1'e kadar? Peg solitaire üçgen: 8 sıra, en alt 8 çivi
+                if(r>=0 && r<8 && c>=0 && c<=r) return true;
+                return false;
+            },
+            startEmpty: [0,0] // tepe noktası boş olsun (genelde)
+        },
+        "Trapezoid": {
+            rows: 5, cols: 7,
+            shape: (r,c) => {
+                // yamuk: üst sıra 3, alt sıra 7
+                if(r===0 && c>=2 && c<=4) return true;
+                if(r===1 && c>=1 && c<=5) return true;
+                if(r>=2 && r<=4 && c>=0 && c<=6) return true;
+                return false;
+            },
+            startEmpty: [2,3]
+        },
+        "Rhombus": {
+            rows: 7, cols: 7,
+            shape: (r,c) => {
+                // eşkenar dörtgen: |r-3| + |c-3| <= 3
+                return (Math.abs(r-3)+Math.abs(c-3) <= 3);
+            },
+            startEmpty: [3,3]
+        },
+        "Snowflake": {
+            rows: 7, cols: 7,
+            shape: (r,c) => {
+                // kar tanesi: altıgen yıldız varyasyonu (İngiliz + bazı köşeler)
+                if( (r===0 || r===6) && (c===3) ) return true;
+                if( (r===1 || r===5) && (c>=1 && c<=5) ) return true;
+                if( (r>=2 && r<=4) && (c>=0 && c<=6) ) return true;
+                return false;
+            },
+            startEmpty: [3,3]
+        },
+        "Wiegleb": {
+            rows: 7, cols: 7,
+            shape: (r,c) => {
+                // Wiegleb tahtası: klasik İngiliz + dört köşe çıkıntı?
+                if( (r===0 || r===6) && (c===2 || c===3 || c===4) ) return true;
+                if( (r===1 || r===5) && (c>=1 && c<=5) ) return true;
+                if( (r>=2 && r<=4) && (c>=0 && c<=6) ) return true;
+                return false;
+            },
+            startEmpty: [3,3]
+        },
+        "Asymmetric": {
+            rows: 7, cols: 7,
+            shape: (r,c) => {
+                // asimetrik: rastgele gibi ama oynanabilir: L şekli
+                if( (r<=4 && c<=4) && !(r===0 && c===0) ) return true;
+                if( r===5 && c>=1 && c<=3 ) return true;
+                if( r===6 && c===2 ) return true;
+                return false;
+            },
+            startEmpty: [2,2]
+        }
+    };
+    
+    // Oyun durumu
+    let currentBoardId = "English";
+    let rows = 7, cols = 7;
+    let board = [];      // true: çivi, false: boş geçerli delik, null: geçersiz alan
+    let isValid = [];
+    let selectedRow = null, selectedCol = null;
+    let moveCount = 0;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let gameActive = true; // süre sayacı için, reset'te sıfırlanır
+    
+    // Canvas
+    const canvas = document.getElementById('pegCanvas');
+    let ctx = canvas.getContext('2d');
+    let cellW, cellH;
+    
+    // ---------- Yardımcı fonksiyonlar ----------
+    function stopTimer() {
+        if(timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+    
+    function startTimer() {
+        if(timerInterval) stopTimer();
+        timerInterval = setInterval(() => {
+            if(gameActive) {
+                timerSeconds++;
+                updateTimerDisplay();
+            }
+        }, 1000);
+    }
+    
+    function updateTimerDisplay() {
+        let mins = Math.floor(timerSeconds / 60);
+        let secs = timerSeconds % 60;
+        document.getElementById('timerDisplay').innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    }
+    
+    function updateMoveAndMsg() {
+        document.getElementById('moveCount').innerText = moveCount;
+        const left = countPegs();
+        let msg = document.getElementById('gameMsg');
+        if(left === 1) msg.innerText = "🏆 Mükemmel! Tek çivi kaldı! 🎉";
+        else if(left === 0) msg.innerText = "🤯 Sıfır çivi! İnanılmaz!";
+        else msg.innerText = `📌 Kalan çivi: ${left}  |  Hamle: ${moveCount}`;
+    }
+    
+    function countPegs() {
+        let cnt = 0;
+        for(let i=0;i<rows;i++) {
+            for(let j=0;j<cols;j++) {
+                if(isValid[i][j] && board[i][j] === true) cnt++;
+            }
+        }
+        return cnt;
+    }
+    
+    function buildBoardFromDef(def) {
+        rows = def.rows;
+        cols = def.cols;
+        isValid = Array(rows).fill().map(() => Array(cols).fill(false));
+        for(let i=0;i<rows;i++) {
+            for(let j=0;j<cols;j++) {
+                isValid[i][j] = def.shape(i,j);
+            }
+        }
+        board = Array(rows).fill().map(() => Array(cols).fill(null));
+        for(let i=0;i<rows;i++) {
+            for(let j=0;j<cols;j++) {
+                if(isValid[i][j]) board[i][j] = true; // başlangıçta çivi dolu
+            }
+        }
+        // başlangıç boşluğu
+        const [er, ec] = def.startEmpty;
+        if(isValid[er] && isValid[er][ec]) board[er][ec] = false;
+        else {
+            // fallback: ilk geçerli hücreyi boşalt
+            for(let i=0;i<rows;i++) {
+                let found=false;
+                for(let j=0;j<cols;j++) {
+                    if(isValid[i][j]) { board[i][j]=false; found=true; break; }
+                }
+                if(found) break;
+            }
+        }
+    }
+    
+    function loadBoard(boardId) {
+        stopTimer();
+        const def = BOARD_DEFS[boardId];
+        if(!def) return;
+        buildBoardFromDef(def);
+        moveCount = 0;
+        timerSeconds = 0;
+        updateTimerDisplay();
+        document.getElementById('moveCount').innerText = "0";
+        selectedRow = null;
+        gameActive = true;
+        startTimer();
+        drawBoard();
+        updateMoveAndMsg();
+        currentBoardId = boardId;
+        // buton aktif görünümü
+        document.querySelectorAll('.game-btn').forEach(btn => {
+            if(btn.innerText === boardId || (boardId.includes("Square") && btn.innerText === boardId)) 
+                btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    }
+    
+    function resetCurrentBoard() {
+        loadBoard(currentBoardId);
+    }
+    
+    // Hamle kontrol ve uygulama
+    function isValidMove(fromR, fromC, toR, toC) {
+        if(!isValid[toR]?.[toC] || board[toR][toC] !== false) return false;
+        if(!isValid[fromR]?.[fromC] || board[fromR][fromC] !== true) return false;
+        const rowDiff = toR - fromR;
+        const colDiff = toC - fromC;
+        if((Math.abs(rowDiff)===2 && colDiff===0)) {
+            const midR = (fromR+toR)/2;
+            const midC = fromC;
+            if(!isValid[midR][midC] || board[midR][midC] !== true) return false;
+            return true;
+        }
+        else if((Math.abs(colDiff)===2 && rowDiff===0)) {
+            const midR = fromR;
+            const midC = (fromC+toC)/2;
+            if(!isValid[midR][midC] || board[midR][midC] !== true) return false;
+            return true;
+        }
+        return false;
+    }
+    
+    function applyMove(fromR, fromC, toR, toC) {
+        if(!isValidMove(fromR,fromC,toR,toC)) return false;
+        const midR = (fromR+toR)/2;
+        const midC = (fromC+toC)/2;
+        board[fromR][fromC] = false;
+        board[midR][midC] = false;
+        board[toR][toC] = true;
+        moveCount++;
+        document.getElementById('moveCount').innerText = moveCount;
+        updateMoveAndMsg();
+        drawBoard();
+        return true;
+    }
+    
+    function anyMoveLeft() {
+        for(let r=0;r<rows;r++) {
+            for(let c=0;c<cols;c++) {
+                if(board[r][c] === true) {
+                    const dirs = [[-2,0],[2,0],[0,-2],[0,2]];
+                    for(let [dr,dc] of dirs) {
+                        const nr=r+dr, nc=c+dc;
+                        if(nr>=0 && nr<rows && nc>=0 && nc<cols && isValid[nr][nc] && board[nr][nc]===false) {
+                            if(isValidMove(r,c,nr,nc)) return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    // ---------- Çizim ----------
+    function setCanvasSize() {
+        const rect = canvas.getBoundingClientRect();
+        const size = Math.min(rect.width, rect.height);
+        canvas.width = size;
+        canvas.height = size;
+        cellW = canvas.width / cols;
+        cellH = canvas.height / rows;
+        drawBoard();
+    }
+    
+    function drawBoard() {
+        if(!ctx) return;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = '#e2bc89';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        for(let r=0;r<rows;r++) {
+            for(let c=0;c<cols;c++) {
+                const x = c*cellW;
+                const y = r*cellH;
+                const rad = Math.min(cellW,cellH)*0.3;
+                if(isValid[r][c]) {
+                    // delik tabanı
+                    ctx.beginPath();
+                    ctx.arc(x+cellW/2, y+cellH/2, rad+1, 0, Math.PI*2);
+                    ctx.fillStyle = '#a56b38';
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x+cellW/2, y+cellH/2, rad, 0, Math.PI*2);
+                    ctx.fillStyle = '#f2d9b0';
+                    ctx.fill();
+                    
+                    if(board[r][c] === true) {
+                        // çivi
+                        ctx.beginPath();
+                        ctx.arc(x+cellW/2, y+cellH/2, rad-2, 0, Math.PI*2);
+                        ctx.fillStyle = '#FFB347';
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(x+cellW/2, y+cellH/2, rad-4, 0, Math.PI*2);
+                        ctx.fillStyle = '#E67E22';
+                        ctx.fill();
+                        // gülen yüz
+                        ctx.fillStyle = '#3b2a1f';
+                        ctx.beginPath();
+                        ctx.arc(x+cellW/2 - rad*0.2, y+cellH/2 - rad*0.15, rad*0.1, 0, Math.PI*2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(x+cellW/2 + rad*0.2, y+cellH/2 - rad*0.15, rad*0.1, 0, Math.PI*2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(x+cellW/2, y+cellH/2 + rad*0.15, rad*0.12, 0, Math.PI);
+                        ctx.fillStyle = '#c76e2e';
+                        ctx.fill();
+                    } 
+                    else if(board[r][c] === false) {
+                        ctx.beginPath();
+                        ctx.arc(x+cellW/2, y+cellH/2, rad-3, 0, Math.PI*2);
+                        ctx.fillStyle = '#8b5a2b';
+                        ctx.fill();
+                        ctx.fillStyle = '#ffd966';
+                        ctx.font = `${Math.floor(rad)}px "Segoe UI Emoji"`;
+                        ctx.fillText("✨", x+cellW/2-7, y+cellH/2+5);
+                    }
+                    // seçili çivi varsa
+                    if(selectedRow === r && selectedCol === c && board[r][c] === true) {
+                        ctx.beginPath();
+                        ctx.arc(x+cellW/2, y+cellH/2, rad+3, 0, Math.PI*2);
+                        ctx.strokeStyle = '#fff0a0';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
+                } else {
+                    ctx.fillStyle = '#b97f4b';
+                    ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
+                    ctx.fillStyle = '#a26f3a';
+                    ctx.font = `${Math.floor(cellW*0.3)}px "Segoe UI"`;
+                    ctx.fillText("🌿", x+cellW*0.35, y+cellH*0.7);
+                }
+            }
+        }
+    }
+    
+    // Tıklama olayı
+    function handleCanvasTap(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        let clientX, clientY;
+        if(e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+            e.preventDefault();
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        let canvasX = (clientX - rect.left) * scaleX;
+        let canvasY = (clientY - rect.top) * scaleY;
+        if(canvasX<0 || canvasY<0 || canvasX>canvas.width || canvasY>canvas.height) return;
+        const col = Math.floor(canvasX / cellW);
+        const row = Math.floor(canvasY / cellH);
+        if(row<0 || row>=rows || col<0 || col>=cols || !isValid[row][col]) {
+            selectedRow = null;
+            drawBoard();
+            return;
+        }
+        if(selectedRow === null) {
+            if(board[row][col] === true) {
+                selectedRow = row;
+                selectedCol = col;
+                drawBoard();
+                document.getElementById('gameMsg').innerHTML = "➡️ Şimdi atlanacak çivinin üzerinden boşluğa tıkla";
+            } else {
+                document.getElementById('gameMsg').innerHTML = "🔔 Önce bir çivi seç!";
+                setTimeout(()=>updateMoveAndMsg(),800);
+            }
+        } else {
+            if(isValidMove(selectedRow, selectedCol, row, col)) {
+                applyMove(selectedRow, selectedCol, row, col);
+                selectedRow = null;
+                drawBoard();
+                if(!anyMoveLeft()) {
+                    gameActive = false; // süre durmaz ama hamle yok
+                    document.getElementById('gameMsg').innerHTML = "🏁 Oyun bitti! Yeniden başlatabilirsin.";
+                    stopTimer();
+                }
+            } else {
+                if(board[row][col] === true) {
+                    selectedRow = row;
+                    selectedCol = col;
+                    drawBoard();
+                    document.getElementById('gameMsg').innerHTML = "🔄 Yeni çivi seçildi, atla!";
+                } else {
+                    selectedRow = null;
+                    drawBoard();
+                    document.getElementById('gameMsg').innerHTML = "❌ Geçersiz atlama, tekrar dene.";
+                    setTimeout(()=>updateMoveAndMsg(),800);
+                }
+            }
+        }
+    }
+    
+    // menü oluşturma
+    function buildGameMenu() {
+        const container = document.getElementById('gameSelector');
+        container.innerHTML = '';
+        const boardNames = Object.keys(BOARD_DEFS);
+        boardNames.forEach(name => {
+            const btn = document.createElement('button');
+            btn.innerText = name;
+            btn.classList.add('game-btn');
+            btn.addEventListener('click', () => {
+                loadBoard(name);
+            });
+            container.appendChild(btn);
+        });
+    }
+    
+    // olay dinleyiciler
+    function attachEvents() {
+        canvas.addEventListener('click', handleCanvasTap);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const fakeEvent = { clientX: touch.clientX, clientY: touch.clientY };
+            handleCanvasTap(fakeEvent);
+        });
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            resetCurrentBoard();
+        });
+        window.addEventListener('resize', () => {
+            setCanvasSize();
+            drawBoard();
+        });
+    }
+    
+    function init() {
+        buildGameMenu();
+        attachEvents();
+        loadBoard("English");
+        setCanvasSize();
+    }
+    
+    init();
+</script>
+</body>
+</html>
